@@ -11,34 +11,34 @@ class SpeechSignal:
         self.sr, self.wave = scipy.io.wavfile.read(path)
         print("Data loading completed")
 
-    def plotter_p(self, win_type="rec", plot_num=5, frame_len_start=64):
+    def plotter_p(self, win_type="rec", plot_num=5, frame_len_start=64, factor=2):
         fig, ax = plt.subplots(nrows=plot_num + 1)
-        fig.suptitle("{x}".format(x=win_type))
         for i in range(plot_num):
-            frame_length = frame_len_start * (2 ** i)
+            frame_length = frame_len_start * (factor ** i)
             hop_length = frame_length // 2
             dic = {"rec": scipy.signal.windows.boxcar(frame_length), "ham": scipy.signal.windows.hamming(frame_length)}
             win = dic[win_type]
-            win = win.reshape(frame_length, 1)
 
-            frame = librosa.util.frame(self.wave, frame_length=frame_length, hop_length=hop_length)
+            # librosa.util.frame：no padding and cut off at the end
+            frame = librosa.util.frame(self.wave, frame_length=frame_length, hop_length=hop_length, axis=0)
             frame_win = win * frame
-            power = np.sum(frame_win * frame_win, axis=0)
-            power_log = np.log10(power)
-            # power_log = librosa.power_to_db(power)
+            energy = np.mean(frame_win * frame_win, axis=1)
+            energy_log = 10 * np.log10(energy)
+            # energy_log = librosa.power_to_db(energy)
 
-            ax[i].plot(power)
+            ax[i].plot(energy)
             # librosa.display.waveshow(frame, sr=self.sr, max_points=self.sr // 2, ax=ax[i])
-            ax[i].set_title("{x},M = {m}".format(x=win_type, m=frame_length), y=0.5)
-            ax[i].xaxis.set_visible(False)
+            ax[i].set_title(win_type + ", N = {m}".format(m=frame_length), y=1)
         ax[plot_num].plot(self.wave)
+        ax[plot_num].set_title("speech signal", y=1)
         # librosa.display.waveshow(self.wave, sr=self.sr, max_points=self.sr // 2, ax=ax[plot_num])
+        fig.tight_layout()
         fig.show()
 
-    def plotter_f(self, win_type="rec", plot_num=5, frame_len_start=64, time_index=None):
+    def plotter_f(self, win_type="rec", plot_num=5, frame_len_start=64, factor=2, time_index=None):
         fig, ax = plt.subplots(nrows=plot_num + 1)
         for i in range(plot_num):
-            frame_length = frame_len_start * (2 ** i)
+            frame_length = frame_len_start * (factor ** i)
             hop_length = frame_length // 2
             dic = {"rec": scipy.signal.windows.boxcar(frame_length), "ham": scipy.signal.windows.hamming(frame_length)}
             win = dic[win_type]
@@ -46,8 +46,14 @@ class SpeechSignal:
             if time_index:
                 start_index = int(time_index * self.sr)
                 spec = scipy.fft.fft(self.wave[start_index:start_index + frame_length] * win)
-                ax[i].plot(np.abs(spec[:frame_length // 2 - 1]))
-                ax[i].set_title("{x},M = {m}".format(x=win_type, m=frame_length), y=0.5)
+
+                x = np.arange(frame_length) / frame_length * 8000
+
+                # n_fft//2 + 1
+                ax[i].plot(x[:frame_length // 2 + 1], 20 * np.log10(np.abs(spec[:frame_length // 2 + 1])))
+                ax[i].set_title("{x},M = {m}".format(x=win_type, m=frame_length), y=1)
+                ax[i].set_ylabel("(dB)")
+                ax[i].set_xlabel("(Hz)")
             else:
                 spec = librosa.stft(self.wave * 1.0, n_fft=frame_length, hop_length=hop_length, win_length=frame_length,
                                     window=win)
@@ -65,5 +71,13 @@ class SpeechSignal:
 if __name__ == '__main__':
     wav_path = "./data/Male_8k.wav"
     speech = SpeechSignal(wav_path)
-    # speech.plotter_p(win_type="ham", hop_length=32, plot_num=4, frame_len_start=64)
-    speech.plotter_f(win_type="rec", plot_num=4, frame_len_start=64, time_index=0.85)
+    # speech.plotter_p(win_type="rec", plot_num=4, frame_len_start=64)
+    # speech.plotter_p(win_type="ham", plot_num=4, frame_len_start=64)
+
+    # vioced
+    # speech.plotter_f(win_type="rec", plot_num=2, factor=8, frame_len_start=64, time_index=0.83)
+    # speech.plotter_f(win_type="ham", plot_num=2, factor=8, frame_len_start=64, time_index=0.83)
+
+    # unvoiced
+    speech.plotter_f(win_type="rec", plot_num=2, factor=8, frame_len_start=64, time_index=2.08)
+    speech.plotter_f(win_type="ham", plot_num=2, factor=8, frame_len_start=64, time_index=2.08)
