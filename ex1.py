@@ -57,7 +57,7 @@ class SpeechSignal:
                 ax[i].set_xlabel("(Hz)")
 
                 wave_i = np.zeros(frame_len_end)
-                wave_i[:frame_length] = self.wave[start_index:start_index + frame_length]
+                wave_i[:frame_length] = self.wave[start_index:start_index + frame_length] * win
                 ax[i+1].plot(wave_i)
             else:
                 spec = librosa.stft(self.wave * 1.0, n_fft=frame_length, hop_length=hop_length, win_length=frame_length,
