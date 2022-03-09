@@ -33,12 +33,13 @@ class SpeechSignal:
         ax[plot_num].set_title("speech signal", y=1)
         # librosa.display.waveshow(self.wave, sr=self.sr, max_points=self.sr // 2, ax=ax[plot_num])
         fig.tight_layout()
-        fig.show()
+        plt.show()
 
     def plotter_f(self, win_type="rec", plot_num=5, frame_len_start=64, factor=2, time_index=None):
-        fig, ax = plt.subplots(nrows=plot_num + 1)
-        for i in range(plot_num):
-            frame_length = frame_len_start * (factor ** i)
+        fig, ax = plt.subplots(nrows=plot_num * 2)
+        frame_len_end = frame_len_start * (factor ** (plot_num - 1))
+        for i in range(0, plot_num * 2, 2):
+            frame_length = frame_len_start * (factor ** (i // 2))
             hop_length = frame_length // 2
             dic = {"rec": scipy.signal.windows.boxcar(frame_length), "ham": scipy.signal.windows.hamming(frame_length)}
             win = dic[win_type]
@@ -54,18 +55,22 @@ class SpeechSignal:
                 ax[i].set_title("{x},M = {m}".format(x=win_type, m=frame_length), y=1)
                 ax[i].set_ylabel("(dB)")
                 ax[i].set_xlabel("(Hz)")
+
+                wave_i = np.zeros(frame_len_end)
+                wave_i[:frame_length] = self.wave[start_index:start_index + frame_length]
+                ax[i+1].plot(wave_i)
             else:
                 spec = librosa.stft(self.wave * 1.0, n_fft=frame_length, hop_length=hop_length, win_length=frame_length,
                                     window=win)
                 spec_maglog = librosa.amplitude_to_db(np.abs(spec), ref=np.max)
                 librosa.display.specshow(spec_maglog, sr=self.sr, hop_length=hop_length, ax=ax[i])
         if time_index:
-            ax[plot_num].plot(self.wave[start_index:start_index + frame_length])
+            pass
         else:
             ax[plot_num].plot(self.wave)
         # librosa.display.waveshow(self.wave * 1.0, sr=self.sr, max_points=self.sr // 2, ax=ax[plot_num])
         fig.tight_layout()
-        fig.show()
+        plt.show()
 
 
 if __name__ == '__main__':
@@ -75,8 +80,8 @@ if __name__ == '__main__':
     # speech.plotter_p(win_type="ham", plot_num=4, frame_len_start=64)
 
     # vioced
-    # speech.plotter_f(win_type="rec", plot_num=2, factor=8, frame_len_start=64, time_index=0.83)
-    # speech.plotter_f(win_type="ham", plot_num=2, factor=8, frame_len_start=64, time_index=0.83)
+    speech.plotter_f(win_type="rec", plot_num=2, factor=8, frame_len_start=64, time_index=0.83)
+    speech.plotter_f(win_type="ham", plot_num=2, factor=8, frame_len_start=64, time_index=0.83)
 
     # unvoiced
     speech.plotter_f(win_type="rec", plot_num=2, factor=8, frame_len_start=64, time_index=2.08)
