@@ -55,6 +55,7 @@ class SpeechSignal:
                 ax[i].set_title("{x},M = {m}".format(x=win_type, m=frame_length), y=1)
                 ax[i].set_ylabel("(dB)")
                 ax[i].set_xlabel("(Hz)")
+                ax[i].set_xlim([0, self.sr // 2])
 
                 wave_i = np.zeros(frame_len_end)
                 wave_i[:frame_length] = self.wave[start_index:start_index + frame_length] * win
