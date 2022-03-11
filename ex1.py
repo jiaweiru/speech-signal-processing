@@ -74,15 +74,17 @@ class SpeechSignal:
 
 
 if __name__ == '__main__':
-    wav_path = "./data/Male_8k.wav"
+    wav_path = "./data/Speech_8k/S001.wav"
     speech = SpeechSignal(wav_path)
     # speech.plotter_p(win_type="rec", plot_num=4, frame_len_start=64)
     # speech.plotter_p(win_type="ham", plot_num=4, frame_len_start=64)
 
     # vioced
-    speech.plotter_f(win_type="rec", plot_num=2, factor=8, frame_len_start=64, time_index=0.83)
-    speech.plotter_f(win_type="ham", plot_num=2, factor=8, frame_len_start=64, time_index=0.83)
+    # speech.plotter_f(win_type="ham", plot_num=1, factor=8, frame_len_start=256, time_index=2.5)
+    time = [0.8, 0.85, 0.9, 0.95]
+    for i in time:
+        speech.plotter_f(win_type="ham", plot_num=1, factor=2, frame_len_start=512, time_index=i)
 
     # unvoiced
-    speech.plotter_f(win_type="rec", plot_num=2, factor=8, frame_len_start=64, time_index=2.08)
-    speech.plotter_f(win_type="ham", plot_num=2, factor=8, frame_len_start=64, time_index=2.08)
+    # speech.plotter_f(win_type="rec", plot_num=1, factor=8, frame_len_start=64, time_index=2.08)
+    # speech.plotter_f(win_type="ham", plot_num=2, factor=8, frame_len_start=64, time_index=2.08)
