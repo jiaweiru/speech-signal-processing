@@ -84,13 +84,14 @@ if __name__ == '__main__':
     wav_path = "./data/Speech_8k/S044.wav"
     wav_path2 = "./data/Speech_8k/S005.wav"
     speech = SpeechSignal(wav_path)
+    print(speech.wave[-3:])
     speech2 = SpeechSignal(wav_path2)
     # speech.plotter_p(win_type="rec", plot_num=4, frame_len_start=64)
     # speech.plotter_p(win_type="ham", plot_num=4, frame_len_start=64)
 
     # vioced
-    # speech.plotter_f(win_type="ham", plot_num=1, factor=8, frame_len_start=64, time_index=1.125, n_fft=512)
-    speech.plotter_f(win_type="ham", plot_num=1, factor=8, frame_len_start=512, time_index=0.2, n_fft=512)
+    speech.plotter_f(win_type="rec", plot_num=1, factor=8, frame_len_start=512, time_index=0.2, n_fft=512)
+    # speech.plotter_f(win_type="ham", plot_num=1, factor=8, frame_len_start=512, time_index=0.2, n_fft=512)
     # speech2.plotter_f(win_type="rec", plot_num=1, factor=8, frame_len_start=64, time_index=1.25, n_fft=512)
     # speech2.plotter_f(win_type="ham", plot_num=1, factor=8, frame_len_start=512, time_index=1.96, n_fft=512)
 
