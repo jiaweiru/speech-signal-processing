@@ -84,7 +84,7 @@ if __name__ == '__main__':
     wav_path = "./data/Speech_8k/S044.wav"
     wav_path2 = "./data/Speech_8k/S005.wav"
     speech = SpeechSignal(wav_path)
-    print(speech.wave[-3:])
+    print(speech.wave.shape)
     speech2 = SpeechSignal(wav_path2)
     # speech.plotter_p(win_type="rec", plot_num=4, frame_len_start=64)
     # speech.plotter_p(win_type="ham", plot_num=4, frame_len_start=64)
