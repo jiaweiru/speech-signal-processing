@@ -20,6 +20,7 @@ class SpeechSignal:
         s_pad = np.zeros(n_fft)
         s_pad[:s.shape[0]] = s[:]
         n = len(s_pad)
+
         # r(i), i = 1 ~ p - 1
         Rp = np.zeros(p + 1)
         for i in range(p + 1):
@@ -52,7 +53,7 @@ class SpeechSignal:
         G = np.sqrt(Ep[p - 1])
         return ar, G
 
-    def plot_spec(self, s, ar, G, n_fft):
+    def plot_spec(self, s, ar, G, n_fft, p):
         origin_spec = np.abs(scipy.fft.fft(s, n_fft))
         origin_logspec = 20 * np.log10(origin_spec)
 
@@ -64,29 +65,32 @@ class SpeechSignal:
 
         # sr = 8000
         x = x / n_fft * 8000
-        ax.plot(x, origin_logspec, label='orgin', linewidth=0.5)
-        ax.plot(x, lpa_logspec, label='lpa', linewidth=0.5)
+        ax.plot(x, origin_logspec, label='orgin')
+        ax.plot(x, lpa_logspec, label='lpa')
         ax.set_xlim([0, 4000])
         ax.set_xlabel("Hz")
         ax.set_ylabel("dB")
+        ax.set_title(f"p={p}")
         ax.legend()
         plt.show()
 
     def plot_waveform(self, s):
         fig, ax = plt.subplots()
         ax.plot(s)
+        ax.set_xlim([0, s.shape[0]])
         plt.show()
 
 
 if __name__ == '__main__':
     wav_path = "./data/Male_8k.wav"
     nfft = 512
+    winl = 256
     p = 400
 
     speech = SpeechSignal(wav_path)
-    f = speech.get_frame(512, 6300)
+    f = speech.get_frame(winl, 6300)
     ar, G = speech.lpc_coeff(f, p, nfft)
     speech.plot_waveform(f)
-    speech.plot_spec(f, ar, G, nfft)
+    speech.plot_spec(f, ar, G, nfft, p)
 
 
