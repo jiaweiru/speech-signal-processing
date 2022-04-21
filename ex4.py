@@ -20,11 +20,12 @@ class SpeechSignal:
         s_pad = np.zeros(n_fft)
         s_pad[:s.shape[0]] = s[:]
         n = len(s_pad)
-
         # r(i), i = 1 ~ p - 1
         Rp = np.zeros(p + 1)
         for i in range(p + 1):
-            Rp[i] = np.sum(np.multiply(s_pad[i:n], s_pad[:n - i]))
+            Rp[i] = 0
+            for j in range(n-i):
+                Rp[i] = Rp[i] + s_pad[j] * s_pad[j + i]
 
         # index[0] -> i = 1, index[p - 1] or [p - 1, p - 1]-> i = p
         Ep = np.zeros((p, 1))
@@ -53,7 +54,7 @@ class SpeechSignal:
         G = np.sqrt(Ep[p - 1])
         return ar, G
 
-    def plot_spec(self, s, ar, G, n_fft, p):
+    def plot_spec(self, s, ar, G, n_fft):
         origin_spec = np.abs(scipy.fft.fft(s, n_fft))
         origin_logspec = 20 * np.log10(origin_spec)
 
@@ -84,13 +85,13 @@ class SpeechSignal:
 if __name__ == '__main__':
     wav_path = "./data/Male_8k.wav"
     nfft = 512
-    winl = 256
-    p = 400
+    winl = 160
+    p = 10
 
     speech = SpeechSignal(wav_path)
     f = speech.get_frame(winl, 6300)
     ar, G = speech.lpc_coeff(f, p, nfft)
     speech.plot_waveform(f)
-    speech.plot_spec(f, ar, G, nfft, p)
+    speech.plot_spec(f, ar, G, nfft)
 
 

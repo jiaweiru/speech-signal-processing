@@ -61,16 +61,16 @@ class SpeechSignal:
         return frame, elp
 
     def pitch_detection_frame(self, frame, elp):
-        if elp < 55:
+        if elp < 62:
             return 0
         cor = np.correlate(frame, frame, "full")
         cor = cor[-frame.shape[0]:]
         # for i in range(cor.shape[0]):
         #     cor[i] = (cor[i] / (cor.shape[0] - i))
-        #     if i > 40:
-        #         cor[i] = cor[i] * 0.85
-        #     if i > 80:
-        #         cor[i] = cor[i] * 0.85
+        #     if i > 32:
+        #         cor[i] = cor[i] * 0.9
+        #     if i > 96:
+        #         cor[i] = cor[i] * 0.9
         max_index = np.argmax(cor[16:134])
         max_index = max_index + 16
         if cor[max_index] < 0.25 * cor[0]:
@@ -100,19 +100,20 @@ class SpeechSignal:
     def voiced(self, start):
         length = 256
         frame = self.wave[start:start + length]
+        frame = frame * scipy.signal.windows.hamming(length)
         fig, ax = plt.subplots(nrows=3)
         frame_lp = scipy.signal.filtfilt([0.008233, -0.004879, 0.007632, 0.007632, -0.004879, 0.008233],
                                          [1., -3.6868, 5.8926, -5.0085, 2.2518, -0.4271],
                                          frame)
-        frame_cc = center_clip(frame_lp, get_cl(frame_lp))
+        frame_cc = center_clip(frame, get_cl(frame))
         freq = np.abs(scipy.fft.fft(frame))
         freq_lp = np.abs(scipy.fft.fft(frame_lp))
         freq_cc = np.abs(scipy.fft.fft(frame_cc))
         ax[0].plot(frame)
         ax[0].set_xlim([0, length])
         # ax[0].set_ylim([-2000, 2000])
-        ax[1].plot(frame_lp)
-        ax[1].set_xlim([0, length])
+        # ax[1].plot(frame_lp)
+        # ax[1].set_xlim([0, length])
         # ax[1].set_ylim([-2000, 2000])
         ax[2].plot(frame_cc)
         ax[2].set_xlim([0, length])
@@ -141,7 +142,7 @@ if __name__ == '__main__':
     wav_path2 = "./data/Male_8k.wav"
     speech = SpeechSignal(wav_path)
     speech2 = SpeechSignal(wav_path2)
-    # speech.voiced(15200)
+    speech.voiced(15200)
     # speech2.voiced(15800)
-    speech.pitch_detection()
-    speech2.pitch_detection()
+    # speech.pitch_detection()
+    # speech2.pitch_detection()
