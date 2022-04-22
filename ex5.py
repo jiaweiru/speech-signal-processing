@@ -18,8 +18,6 @@ def get_data():
             data = wave
         else:
             data = np.concatenate((data, wave), axis=0)
-        if i == 10:
-            break
     return data
 
 
@@ -58,17 +56,7 @@ def Quantization(wave, codebook, k):
 
 
 class VQ_LBG:
-    """
-    T={X1,X2,...,XM}=data
-    Xm={x(m,1),x(m,2)}
-    cluster_num = (final)N
-    Codebook: C={c1,c2,...,cN}
-    Codewords: Cn={c(n,1),c(n,2)}
-    Coding region: P={S1, S2,...,SN}
-    Q(Xm)=cn
-    D_ave = 1/Mk * norm(Xm-Q(Xm))
-    """
-    def __init__(self, cluster_num, sample_num_all, max_iter=300, epsilon=0.01):
+    def __init__(self, cluster_num, sample_num_all, max_iter=3000, epsilon=0.001):
         self.cluster_num = cluster_num
         self.max_iter = max_iter
         self.sample_num_all = sample_num_all
@@ -102,7 +90,6 @@ class VQ_LBG:
 
     def split(self, data):
         for m in range(self.codebook.shape[0]):
-            idx = (np.argwhere(self.label_all == m)).reshape(-1,)
             self.codebook[m] = (1 + self.epsilon) * self.codebook[m]
             self.codebook = np.vstack((self.codebook, ((1 - self.epsilon) * self.codebook[m])))
 
@@ -116,28 +103,28 @@ class VQ_LBG:
         global D_ave
         self.split(data)
         for i in range(int(math.log2(self.cluster_num))):
-            # Outer loop, split the codebook each iter
-            D_ave = self.compute_D_ave(data)
             for it in range(self.max_iter):
-                # Inner loop, minimize the D_average
+                D_ave = self.compute_D_ave(data)
                 for id in range(self.sample_num_all):
                     label = self.find_nearest_codebook(data[id])
                     self.label_all[id] = label
                 self.update_codebook(data)
                 D_ave_new = self.compute_D_ave(data)
-                if (D_ave - D_ave_new) / D_ave <= self.epsilon:
-                    D_ave = D_ave_new
+                print(f"iter={it}")
+                if np.absolute((D_ave - D_ave_new) / D_ave_new) <= self.epsilon:
                     break
             if i is not int(math.log2(self.cluster_num) - 1):
                 self.split(data)
-            print(i)
+            print(f"i={i}")
         return (self.label_all).astype(int), self.codebook
 
 
 if __name__ == "__main__":
-    K = 3
-    N = 64
-    wav_path = "./data/Female_8k.wav"
+    # ---------------------------------------------------------------------
+    K = 1
+    n = 2
+    N = 2**n
+    wav_path = "./data/Speech_8k/S003.wav"
     _, wave_test = scipy.io.wavfile.read(wav_path)
     wave = get_data()
     energy = short_term_energy(wave)
@@ -145,12 +132,57 @@ if __name__ == "__main__":
 
     vqlbg = VQ_LBG(N, vec_energy.shape[0])
     l, b = vqlbg.fit(vec_energy)
-    print(l)
 
     v, vq = Quantization(wave_test, b, K)
 
     fig, ax = plt.subplots()
     ax.plot(v)
     ax.plot(vq)
+    ax.set_ylabel("dB")
+    ax.set_xlabel("Frame index")
+    ax.set_title(f"{n}bit")
+    print(v.shape)
+    print(np.mean((v - vq) * (v - vq)))
     plt.show()
-    print(b)
+    # ---------------------------------------------------------------------
+
+    # k = 1
+    # 2bit:18.286654163440726
+    # 3bit:5.1144496399628485
+    # 4bit:1.3236989743378842
+    # 5bit:0.3357267535923523
+    # 6bit:0.07298133942712855
+    # 7bit:0.018559147955918467
+    # 8bit:0.005505656301693018
+
+    # k = 2
+    # 2bit:38.60364133229845
+    # 3bit:27.488924874525964
+    # 4bit:14.001736494285662
+    # 5bit:5.9434025452917885
+    # 6bit:3.4634746985149816
+    # 7bit:1.637997337781119
+    # 8bit:1.1800045286073193
+
+    # k = 3
+    # 2bit:53.0592215126667
+    # 3bit:36.16585378429846
+    # 4bit:20.38372365969113
+    # 5bit:15.007615613532304
+    # 6bit:7.973363596704419
+    # 7bit:4.860936309320153
+    # 8bit:3.6135303018521014
+
+    #
+    # ---------------------------------------------------------------------
+    # k1 = [18.286654163440726, 5.1144496399628485, 1.3236989743378842, 0.3357267535923523, 0.07298133942712855, 0.018559147955918467, 0.005505656301693018]
+    # k2 = [38.60364133229845, 27.488924874525964, 14.001736494285662, 5.9434025452917885, 3.4634746985149816, 1.637997337781119, 1.1800045286073193]
+    # k3 = [53.0592215126667, 36.16585378429846, 20.38372365969113, 15.007615613532304, 7.973363596704419, 4.860936309320153, 3.6135303018521014]
+    # x = [2, 3, 4, 5, 6, 7, 8]
+    # fig, ax = plt.subplots()
+    # ax.plot(x, k1, label="k=1")
+    # ax.plot(x, k2, label="k=2")
+    # ax.plot(x, k3, label="k=3")
+    # ax.legend()
+    # plt.show()
+    # ---------------------------------------------------------------------
