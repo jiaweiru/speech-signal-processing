@@ -18,6 +18,8 @@ def get_data():
             data = wave
         else:
             data = np.concatenate((data, wave), axis=0)
+        if i == 10:
+            break
     return data
 
 
@@ -120,17 +122,17 @@ class VQ_LBG:
 
 
 if __name__ == "__main__":
-    wav_path = "./data/Speech_8k/S001.wav"
+    wav_path = "./data/Speech_8k/S044.wav"
     _, wave_test = scipy.io.wavfile.read(wav_path)
     wave = get_data()
     energy = short_term_energy(wave)
-    vec_energy = vector(energy, 2)
+    vec_energy = vector(energy, 1)
     vqlbg = VQ_LBG(16, vec_energy.shape[0],)
     l ,b = vqlbg.fit(vec_energy)
     print(l)
 
     energy_test = short_term_energy(wave_test)
-    vec_test = vector(energy_test, 2)
+    vec_test = vector(energy_test, 1)
     vec_test.reshape(-1)
 
     fig, ax = plt.subplots()
