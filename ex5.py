@@ -45,6 +45,18 @@ def vector(seq, k):
     return v
 
 
+def Quantization(wave, codebook, k):
+    e = short_term_energy(wave)
+    v = vector(e, k)
+    vq = np.zeros(v.shape)
+    for i in range(v.shape[0]):
+        q = np.argmin(np.sum((v[i] - codebook) * (v[i] - codebook), axis=1))
+        vq[i] = codebook[q]
+    v = v.reshape(-1)
+    vq = vq.reshape(-1)
+    return v, vq
+
+
 class VQ_LBG:
     """
     T={X1,X2,...,XM}=data
@@ -91,8 +103,8 @@ class VQ_LBG:
     def split(self, data):
         for m in range(self.codebook.shape[0]):
             idx = (np.argwhere(self.label_all == m)).reshape(-1,)
-            self.codebook[m] = (1 + self.epsilon) * np.mean(data[idx], axis=0)
-            self.codebook = np.vstack((self.codebook, ((1 - self.epsilon) * np.mean(data[idx], axis=0))))
+            self.codebook[m] = (1 + self.epsilon) * self.codebook[m]
+            self.codebook = np.vstack((self.codebook, ((1 - self.epsilon) * self.codebook[m])))
 
     def update_codebook(self, data):
         for m in range(self.codebook.shape[0]):
@@ -118,24 +130,27 @@ class VQ_LBG:
                     break
             if i is not int(math.log2(self.cluster_num) - 1):
                 self.split(data)
+            print(i)
         return (self.label_all).astype(int), self.codebook
 
 
 if __name__ == "__main__":
-    wav_path = "./data/Speech_8k/S044.wav"
+    K = 3
+    N = 64
+    wav_path = "./data/Female_8k.wav"
     _, wave_test = scipy.io.wavfile.read(wav_path)
     wave = get_data()
     energy = short_term_energy(wave)
-    vec_energy = vector(energy, 1)
-    vqlbg = VQ_LBG(16, vec_energy.shape[0],)
-    l ,b = vqlbg.fit(vec_energy)
+    vec_energy = vector(energy, K)
+
+    vqlbg = VQ_LBG(N, vec_energy.shape[0])
+    l, b = vqlbg.fit(vec_energy)
     print(l)
 
-    energy_test = short_term_energy(wave_test)
-    vec_test = vector(energy_test, 1)
-    vec_test.reshape(-1)
+    v, vq = Quantization(wave_test, b, K)
 
     fig, ax = plt.subplots()
+    ax.plot(v)
+    ax.plot(vq)
+    plt.show()
     print(b)
-
-
